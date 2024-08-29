@@ -1,4 +1,7 @@
-stages {
+pipeline {
+    agent any
+
+    stages {
         stage('Build') {
             steps {
                 sh 'docker build -t ahmed862/ahmedapp .'
@@ -8,7 +11,7 @@ stages {
         stage('Push') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                    sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD'
+                    sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
                     sh 'docker push ahmed862/ahmedapp'
                 }
             }
@@ -21,3 +24,4 @@ stages {
             }
         }
     }
+}
