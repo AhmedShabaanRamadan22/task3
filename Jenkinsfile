@@ -10,9 +10,11 @@ pipeline {
 
         stage('Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                    sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
-                    sh "docker push ahmed862/ahmedapp:${env.BUILD_NUMBER}"
+                withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh '''
+                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                        docker push ahmed862/ahmedapp:${env.BUILD_NUMBER}
+                    '''
                 }
             }
         }
@@ -20,15 +22,17 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh "docker pull ahmed862/ahmedapp:${env.BUILD_NUMBER}"
-                sh "docker run -d -p 60:80 ahmed862/ahmedapp:${env.BUILD_NUMBER}"
+                sh "docker run -d -p 60${env.PORT}:80 ahmed862/ahmedapp:${env.BUILD_NUMBER}"
             }
         }
     }
 
     post {
         always {
-            slackSend channel: '#ahmed', 
-            message: """
-            Pipeline Status: ${currentBuild.currentResult}
-            Job: ${env.JOB_NAME}
-            Build Number: ${env.BUILD
+            slackSend(
+                channel: 'ahmed',
+                message: "Pipeline Status: ${currentBuild.currentResult} - Job: ${env.JOB_NAME} Build: ${env.BUILD_NUMBER} URL: ${env.BUILD_URL}"
+            )
+        }
+    }
+}
